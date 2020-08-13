@@ -22,6 +22,7 @@
 #include <linux/types.h>
 
 #include "nfluaconf.h"
+#include <states.h>
 
 struct nflua_state;
 
@@ -35,7 +36,7 @@ struct xt_lua_mtinfo {
 	__u8 flags;
 
 	/* kernel only */
-	struct nflua_state *state  __attribute__((aligned(8)));
+	lunatik_State *state  __attribute__((aligned(8)));
 };
 
 #endif /* _XT_LUA_COMMON_H */

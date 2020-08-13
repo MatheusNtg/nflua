@@ -4,8 +4,8 @@
 	branch = master
 [submodule "deps/lunatik"]
 	path = deps/lunatik
-	url = https://github.com/cujoai/lunatik.git
-	branch = master
+	url = https://github.com/MatheusNtg/lunatik.git
+	branch = data
 [submodule "deps/luabase64"]
 	path = deps/luabase64
 	url = https://github.com/cujoai/luabase64.git

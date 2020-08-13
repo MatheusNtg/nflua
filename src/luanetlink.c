@@ -57,4 +57,3 @@ int luaopen_netlink(lua_State *L)
 	luaL_newlib(L, luanetlink_lib);
 	return 1;
 }
-EXPORT_SYMBOL(luaopen_netlink);
