@@ -9,9 +9,13 @@ local kscript = [[
 local nflua = session:newstate'nflua'
 nflua:dostring(kscript)
 
-while true do
-	local recv = nflua:receive()
-	print(memory.tostring(recv))
-end
+local recv = nflua:receive()
+print(memory.tostring(recv))
+
+print("Entrei aqui ou qua?")
+
+err = nflua:close()
+
+print(err)
 
 session:close()

@@ -205,6 +205,7 @@ unlock:
 
 static bool nflua_match(const struct sk_buff *skb, struct xt_action_param *par)
 {
+	pr_debug("A match have been occoured\n");
 	const struct xt_lua_mtinfo *info = par->matchinfo;
 
 	if ((info->flags & XT_NFLUA_TCP_PAYLOAD) &&
