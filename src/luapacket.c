@@ -74,47 +74,47 @@ void luapacket_new(lua_State *L, struct sk_buff *skb, int hooknum)
 {
 	struct luapacket *p = lua_newuserdata(L, sizeof(*p));
 
-	luaL_setmetatable(L, LUAPACKET);
-	p->skb = skb;
-	p->hooknum = hooknum;
-	p->frame = NULL;
-	p->stolen = false;
-}
+		luaL_setmetatable(L, LUAPACKET);
+		p->skb = skb;
+		p->hooknum = hooknum;
+		p->frame = NULL;
+		p->stolen = false;
+	}
 
-void luapacket_stolen(lua_State *L, int arg)
-{
-	struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
+	void luapacket_stolen(lua_State *L, int arg)
+	{
+		struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
 
-	packet->stolen = true;
-}
+		packet->stolen = true;
+	}
 
-void luapacket_unref(lua_State *L, int arg)
-{
-	struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
+	void luapacket_unref(lua_State *L, int arg)
+	{
+		struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
 
-	unrefpacket(L, packet);
-}
+		unrefpacket(L, packet);
+	}
 
-static struct luapacket *getpacket(lua_State *L)
-{
-	struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
+	static struct luapacket *getpacket(lua_State *L)
+	{
+		struct luapacket *packet = luaL_checkudata(L, 1, LUAPACKET);
 
-	if (packet->skb == NULL)
-		luaL_argerror(L, 1, "closed packet");
+		if (packet->skb == NULL)
+			luaL_argerror(L, 1, "closed packet");
 
-	return packet;
-}
+		return packet;
+	}
 
-static int luapacket_close(lua_State *L)
-{
-	struct luapacket *packet = getpacket(L);
+	static int luapacket_close(lua_State *L)
+	{
+		struct luapacket *packet = getpacket(L);
 
-	if (!packet->stolen)
-		return luaL_error(L, "packet must be stolen");
+		if (!packet->stolen)
+			return luaL_error(L, "packet must be stolen");
 
-	kfree_skb(packet->skb);
-	unrefpacket(L, packet);
-	lua_pushboolean(L, true);
+		kfree_skb(packet->skb);
+		unrefpacket(L, packet);
+		lua_pushboolean(L, true);
 
 	return 1;
 }
