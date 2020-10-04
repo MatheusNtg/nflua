@@ -60,47 +60,17 @@ local function createnet(netname, addr, iface)
 	util.assertexec('ip netns add %s', netname)
 	util.assertexec('ip link add %s netns %s type veth peer name %s',
 		eth0, netname, iface)
-
 	util.assertexec('ip link set %s up', iface)
 	util.assertexec('ip -n %s link set %s up', netname, eth0)
-
 	util.assertexec('ip -n %s addr add %s/24 dev %s', netname, addr, eth0)
 	util.assertexec('ip -n %s route add default via %s', netname, addr)
 end
 
 function network.setup()
+--	print(createnet, svnet, svaddr, wan0, clnet, claddr, lan0)
+	
 	createnet(svnet, svaddr, wan0)
-[[
-		netname -> svnet  -> nflua_svnet
-		addr 	-> svaddr -> '10.0.33.1'
-		iface 	-> wan0	  -> nflua_wan0
-		
-		ip netns add nflua_svnet -> Cria um namespace chamado nflua_svnet
-		
-		ip link add nflua_eth0 netns nflua_svnet type veth peer name nflua_wan0
-			|
-			|
-			 -> Cria uma interface ethernet virtual no namespace nflua_svnet e liga ela com a interface virtual
-			    nflua_wan0 (que até o momento não sei onde ela está)
 
-		ip link set nflua_wan0 up -> Sobe a interface nflua_wan0
-
-		ip -n nflua_svnet link set nflua_eth0 up
-			|
-			|
-			 -> Traduzido para: ip netns exec nflua_svnet ip link set nflua_eth0 up
-						|
-						|
-						 -> Suba a interface nflua_eth0 no namespace nflua_svnet
-
-		ip -n nflua_svnet route add default via 10.0.33.1
-			|
-			|
-			 -> Traduzido para: ip netns exec nflua_svnet ip route add default via 10.0.33.1
-						|
-						|
-						 -> Adicionamos na tabela de roteamento, uma rota default para 10.0.33.1	
-]]
 	createnet(clnet, claddr, lan0)
 
 	util.assertexec('ip link add name %s type bridge', br0)

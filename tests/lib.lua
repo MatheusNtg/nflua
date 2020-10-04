@@ -20,12 +20,14 @@ local lunatik = require'lunatik'
 local memory = require'memory'
 
 local driver = require'tests.driver'
---local network = require'tests.network' Removi isso pq agora n vou precisar
---local util = require'tests.util'
+local network = require'tests.network'
+local util = require'tests.util'
 
 local function argerror(arg, msg, fname)
 	fname = fname or '?'
-	return string.format("bad argument #%d to '%s' (%s)", arg, fname, msg)
+	local l = string.format("bad argument #%d to '%s' (%s)", arg, fname, msg)
+--	print(l)
+	return l
 end
 
 local function defaults(cmd)
@@ -43,10 +45,12 @@ end
 -- Caso não esteja, fecha ele e verifica se, ao tentar executar um comando cmd
 -- retorna um erro (o que deveria acontecer) e verifica também, se o erro executado é 'socket closed'
 local function socketclosed(socktype, cmd, ...)
+	print("Executando socketclosed com os parâmetros: ", socktype, cmd)
 	local s = assert(lunatik[socktype]())
 	s:close()
 	local ok, err = pcall(s[cmd], s, ...)
 	assert(ok == false)
+--	print("Error: " .. err)
 	assert(err == argerror(1, 'socket closed'))
 end
 

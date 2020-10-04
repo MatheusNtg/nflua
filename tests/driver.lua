@@ -31,7 +31,7 @@ function driver.reloadmodule()
 	util.assertexec(loadmodule)
 end
 
---network.cleanup() Não preciso disso agora
+network.cleanup()
 --util.silentexec(rmmodule) Não preciso disso agora
 --util.silentexec(loadmodule) Não preciso disso agora
 
