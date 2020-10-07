@@ -31,10 +31,19 @@ function driver.reloadmodule()
 	util.assertexec(loadmodule)
 end
 
+-- Talvez criar um session para o driver seja uma boa solução
+
+
 network.cleanup()
 --util.silentexec(rmmodule) Não preciso disso agora
 --util.silentexec(loadmodule) Não preciso disso agora
 
+
+-- O único jeito que pensei de adaptar isso é encapsulando
+-- cada comando possível e seus possíveis retornos
+-- Mas como ficaria o caso da criação dos estados? Estes precisam de
+-- uma determinada sessão criada para poderem ser executadas
+-- será que um session = session or lunatik.session resolveria?
 local function run(socket, cmd, ...)
 	local ok, err
 	repeat ok, err = socket[cmd](socket, ...) until ok or err ~= 'pending'
