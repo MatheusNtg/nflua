@@ -69,10 +69,6 @@ for socktype, cmds in pairs(cases) do
 	end
 end
 
--- Só adaptei até aqui
-os.exit()
-
-
 -- Esse teste não se aplica à lib do lunatik pela forma como ela funciona
 -- isto é, não é necessário receber uma resposta para realizar outra operação
 -- (coisa que é necessária no NFLua). Por outro lado, certas operações não podem ser
@@ -136,37 +132,74 @@ local function openclosetest_notused()
 end
 
 -- Essa função só realiza o teste no file descriptor do socket
-local function getfd(socktype)
-	local s = assert(nflua[socktype]())
+-- Seria realmente necessário oferecer isso ao usuário?
 
-	local fd = s:getfd()
-	assert(type(fd) == 'number')
-end
+local function getfd_notusedyet()
+	local function getfd(socktype)
+		local fd = nil
+		if socktype == 'session' then
+			session = session or assert(lunatik.session())
+		elseif socktype == 'state' then
+			session = session or assert(lunatik.session())
+			state = session:newstate(defaults(socktype))
+			fd = state:getfd()
+		elseif socktype == 'data' then
+			print('Data')
+		end
+	end
 
-for _, socktype in ipairs{'session', ''} do
-	driver.test('getfd ' .. socktype, getfd, socktype)
+	for _, socktype in ipairs{'session', 'state', 'data', ''} do
+		driver.test('getfd ' .. socktype, getfd, socktype)
+	end
+	
 end
 
 -- A lib do lunatik não oferece suporte ao acesso do pid relacionado
 -- à um socket
-local function getpid(socktype)
-	local s = assert(nflua[socktype]())
-	local pid = s:getpid()
-	assert(type(pid) == 'number')
-	assert(pid & (2 ^ 31) == 2 ^ 31)
-	s:close()
+local function getpid_notused()
+	local function getpid(socktype)
+		local s = assert(nflua[socktype]())
+		local pid = s:getpid()
+		assert(type(pid) == 'number')
+		assert(pid & (2 ^ 31) == 2 ^ 31)
+		s:close()
 
-	s = assert(nflua[socktype](123))
-	assert(s:getpid() == 123)
+		s = assert(nflua[socktype](123))
+		assert(s:getpid() == 123)
+	end
+
+	for _, socktype in ipairs{'control', 'data'} do
+		driver.test('getpid ' .. socktype, getpid, socktype)
+	end
 end
 
-for _, socktype in ipairs{'control', 'data'} do
-	driver.test('getpid ' .. socktype, getpid, socktype)
+local ok, session = pcall(lunatik.session)
+
+if not ok then
+	 print(session)
 end
 
-driver.test('control.getstate', function()
-	local s = assert(nflua.control())
-	assert(s:getstate() == 'ready')
+driver.test('session:create', function()
+	-- Testing a normal creation
+	local s = assert(session:newstate(defaults('newstate')))
+	-- Testing creation of a state that already exists
+	session:newstate(defaults('newstate'))
+	driver.matchdmesg(3, 'state already exists: st')
+	-- Testing creation of a state with maxalloc less than the allowed
+	assert(not (session:newstate('test', 1)))
+	-- Testing creation of a state with a really long name
+	local ok, err = pcall(session.newstate, session, 'herewehaveareallyreallybignamethatshouldnotworktoourcasesoletseeit')
+	assert(ok == false)
+	assert(err == argerror(1, 'name too long'))
+
+
+	s:close()	
+end)
+
+os.exit()
+
+driver.test('session:getstate', function()
+	assert(type(session:getstate()) == 'userdata')
 end)
 
 driver.test('control.create', function()
@@ -339,3 +372,5 @@ driver.test('data.receive', function()
 	]], s:getpid())
 	driver.failrun(c, 'could not execute / load data', 'execute', 'st', code)
 end)
+
+session:close()
