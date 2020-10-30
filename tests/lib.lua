@@ -228,17 +228,14 @@ driver.test('allocation size', function()
 	s2:close()
 end)
 
-os.exit()
+driver.test('state:close', function()
+	local s = assert(session:newstate(defaults('newstate')))
 
-driver.test('control.destroy', function()
-	local s = assert(nflua.control())
-
-	driver.run(s, 'create', 'st')
-	driver.run(s, 'destroy', 'st')
-	assert(#driver.run(s, 'list') == 0)
-
-	driver.failrun(s, 'could not destroy lua state', 'destroy', 'st')
+	assert(s:close())
+	assert(#session:list() == 0)
 end)
+
+os.exit()
 
 driver.test('control.destroy and iptables', function()
 	local s = assert(nflua.control())
