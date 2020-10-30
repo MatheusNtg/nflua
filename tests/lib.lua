@@ -198,11 +198,24 @@ driver.test('session:create', function()
 	s:close()
 end)
 
-os.exit()
-
 driver.test('session:getstate', function()
-	assert(type(session:getstate()) == 'userdata')
+	local s = assert(session:newstate(defaults('newstate')))
+
+	local rule = network.toserver .. ' -m lua --state st --function f'
+
+	util.assertexec('iptables -A %s', rule)
+
+	s:put()
+
+	local s = session:getstate('st')
+	assert(s:getname() == 'st')
+
+	util.assertexec('iptables -D %s', rule)
+
+	s:close()
 end)
+
+os.exit()
 
 driver.test('control.create', function()
 	local s = assert(nflua.control())
