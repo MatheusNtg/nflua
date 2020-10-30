@@ -54,10 +54,10 @@ end
 
 local cases = {
 	session = {
-		'newstate', 
-		'list', 
-		'close', 
-		'getstate', 
+		'newstate',
+		'list',
+		'close',
+		'getstate',
 		'getfd'
 	}
 }
@@ -151,7 +151,7 @@ local function getfd_notusedyet()
 	for _, socktype in ipairs{'session', 'state', 'data', ''} do
 		driver.test('getfd ' .. socktype, getfd, socktype)
 	end
-	
+
 end
 
 -- A lib do lunatik não oferece suporte ao acesso do pid relacionado
@@ -182,18 +182,20 @@ end
 driver.test('session:create', function()
 	-- Testing a normal creation
 	local s = assert(session:newstate(defaults('newstate')))
+
 	-- Testing creation of a state that already exists
 	session:newstate(defaults('newstate'))
 	driver.matchdmesg(3, 'state already exists: st')
+
 	-- Testing creation of a state with maxalloc less than the allowed
 	assert(not (session:newstate('test', 1)))
+
 	-- Testing creation of a state with a really long name
 	local ok, err = pcall(session.newstate, session, 'herewehaveareallyreallybignamethatshouldnotworktoourcasesoletseeit')
 	assert(ok == false)
-	assert(err == argerror(1, 'name too long'))
+	assert(err == argerror(2, 'name too long'))
 
-
-	s:close()	
+	s:close()
 end)
 
 os.exit()
