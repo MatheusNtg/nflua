@@ -215,53 +215,20 @@ driver.test('session:getstate', function()
 	s:close()
 end)
 
-os.exit()
-
-driver.test('control.create', function()
-	local s = assert(nflua.control())
-
-	driver.run(s, 'create', 'st1')
-	local l = driver.run(s, 'list')
-	assert(l[1].name == 'st1')
-	assert(l[1].maxalloc == nflua.defaultmaxallocbytes)
-	driver.run(s, 'destroy', 'st1')
-
-	driver.run(s, 'create', 'st2', 128 * 1024)
-	local l = driver.run(s, 'list')
-	assert(l[1].name == 'st2')
-	assert(l[1].maxalloc == 128 * 1024)
-
-	driver.failrun(s, 'state already exists: st2', 'create', 'st2')
-	driver.run(s, 'destroy', 'st2')
-
-	driver.run(s, 'create', 'st2')
-	driver.run(s, 'destroy', 'st2')
-
-	local n = nflua.maxstates
-	for i = 1, n do
-		driver.run(s, 'create', 'st' .. i)
-	end
-	driver.failrun(s, 'max states limit reached or out of memory',
-		'create', 'st' .. (n + 1))
-
-	local name = string.rep('a', 64)
-	local ok, err = pcall(s.create, s, name)
-	assert(ok == false)
-	assert(err == argerror(2, 'name too long'))
-end)
-
 driver.test('allocation size', function()
-	local s = assert(nflua.control())
+	local s = assert(session:newstate(defaults('newstate')))
+	local s2 = assert(session:newstate('test', 128 * 1024))
 
 	local code = 'string.rep("a", 32 * 1024)'
 
-	driver.run(s, 'create', 'st1')
-	driver.failrun(s, 'could not execute / load data!',
-		'execute', 'st1', code)
+	assert(not s:dostring(code))
+	s:close()
 
-	driver.run(s, 'create', 'st2', 128 * 1024)
-	driver.run(s, 'execute', 'st2', code)
+	assert(s2:dostring(code))
+	s2:close()
 end)
+
+os.exit()
 
 driver.test('control.destroy', function()
 	local s = assert(nflua.control())
