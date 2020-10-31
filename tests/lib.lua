@@ -235,22 +235,23 @@ driver.test('state:close', function()
 	assert(#session:list() == 0)
 end)
 
-os.exit()
-
 driver.test('control.destroy and iptables', function()
-	local s = assert(nflua.control())
+	local s = assert(session:newstate(defaults('newstate')))
 
 	local rule = network.toserver .. ' -m lua --state st --function f'
 
-	driver.run(s, 'create', 'st')
 	util.assertexec('iptables -A %s', rule)
-	driver.failrun(s, 'could not destroy lua state', 'destroy', 'st')
-	assert(#driver.run(s, 'list') == 1)
+
+	assert(not s:close())
+	assert(#session:list() == 1)
 
 	util.assertexec('iptables -D %s', rule)
-	driver.run(s, 'destroy', 'st')
-	assert(#driver.run(s, 'list') == 0)
+
+	assert(s:close())
+	assert(#session:list() == 0)
 end)
+
+os.exit()
 
 driver.test('control.execute', function()
 	local s = assert(nflua.control())
