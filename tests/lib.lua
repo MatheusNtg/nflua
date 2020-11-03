@@ -235,7 +235,7 @@ driver.test('state:close', function()
 	assert(#session:list() == 0)
 end)
 
-driver.test('control.destroy and iptables', function()
+driver.test('state:close and iptables', function()
 	local s = assert(session:newstate(defaults('newstate')))
 
 	local rule = network.toserver .. ' -m lua --state st --function f'
@@ -251,31 +251,24 @@ driver.test('control.destroy and iptables', function()
 	assert(#session:list() == 0)
 end)
 
-os.exit()
+driver.test('state:dostring', function()
+	local s = assert(session:newstate(defaults('newstate')))
 
-driver.test('control.execute', function()
-	local s = assert(nflua.control())
-
-	driver.run(s, 'create', 'st')
 	local token = util.gentoken()
 	local code = string.format('print(%q)', token)
-	driver.run(s, 'execute', 'st', code)
+	assert(s:dostring(code))
 	driver.matchdmesg(4, token)
 
 	token = util.gentoken()
 	code = string.format('print(%q)', token)
-	driver.run(s, 'execute', 'st', code, 'test.lua')
+	assert(s:dostring(code))
 	driver.matchdmesg(4, token)
 
-	driver.run(s, 'destroy', 'st')
-	driver.failrun(s, 'lua state not found', 'execute', 'st', 'print()')
-
-	local bigstring = util.gentoken(64 * 1024)
-	local code = string.format('print(%q)', bigstring)
-	local ok, err = s:execute('st1', code)
-	assert(ok == nil)
-	assert(err == 'Invalid argument')
+	assert(s:close())
+	assert(not session:getstate('st'))
 end)
+
+os.exit()
 
 driver.test('control.list', function()
 	local s = assert(nflua.control())
