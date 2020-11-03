@@ -32,6 +32,12 @@ Then build NFLua:
 make -C iptables/
 ```
 
+Finally, compile the lunatik user space module with:
+```bash
+make -C deps/lunatik/lib
+```
+
+
 Kernel Module
 -------------
 
@@ -73,4 +79,15 @@ sudo insmod ./src/nflua.ko
 To remove NFLua and its dependencies:
 ```bash
 sudo rmmod nflua luajson lua-memory luabase64 lunatik
+```
+
+Running the tests
+-----------------
+
+To run the tests, just run the code below
+
+```bash
+sudo LD_LIBRARY_PATH=./lib:./deps/lua-memory/src:./deps/lunatik/lib LUA_CPATH='./lua/?.so;./deps/lunatik/lib/?.so;./deps/lua-memory/src/?.so;' \
+    XTABLES_LIBDIR=./iptables:/usr/lib/x86_64-linux-gnu/xtables \
+    lua tests/all.lua
 ```
