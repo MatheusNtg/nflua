@@ -268,10 +268,8 @@ driver.test('state:dostring', function()
 	assert(not session:getstate('st'))
 end)
 
-os.exit()
-
-driver.test('control.list', function()
-	local s = assert(nflua.control())
+driver.test('session:list', function()
+	local states = {}
 
 	local function statename(i)
 		return string.format('st%04d', i)
@@ -279,10 +277,10 @@ driver.test('control.list', function()
 
 	local n = 10
 	for i = 1, n do
-		driver.run(s, 'create', statename(i))
+		states[statename(i)] = assert(session:newstate(statename(i)))
 	end
 
-	local l = driver.run(s, 'list')
+	local l = assert(session:list())
 	assert(#l == n)
 	table.sort(l, function(a, b) return a.name < b.name end)
 	for i = 1, n do
@@ -290,11 +288,13 @@ driver.test('control.list', function()
 	end
 
 	for i = 1, n do
-		driver.run(s, 'destroy', statename(i))
+		assert(states[statename(i)]:close())
 	end
 
-	assert(#driver.run(s, 'list') == 0)
+	assert(#session:list() == 0)
 end)
+
+os.exit()
 
 driver.test('control.receive', function()
 	local s = assert(nflua.control())
