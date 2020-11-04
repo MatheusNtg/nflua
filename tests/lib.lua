@@ -26,7 +26,6 @@ local util = require'tests.util'
 local function argerror(arg, msg, fname)
 	fname = fname or '?'
 	local l = string.format("bad argument #%d to '%s' (%s)", arg, fname, msg)
---	print(l)
 	return l
 end
 
@@ -40,10 +39,6 @@ local function defaults(cmd)
 	end
 end
 
-
--- Verifica se um socket socktype está fechado utilizando o comando cmd
--- Caso não esteja, fecha ele e verifica se, ao tentar executar um comando cmd
--- retorna um erro (o que deveria acontecer) e verifica também, se o erro executado é 'socket closed'
 local function socketclosed(socktype, cmd, ...)
 	local s = assert(lunatik[socktype]())
 	s:close()
@@ -66,110 +61,6 @@ for socktype, cmds in pairs(cases) do
 	for _, cmd in ipairs(cmds) do
 		local t = 'socketclosed ' .. socktype .. ' ' .. cmd
 		driver.test(t, socketclosed, socktype, cmd, defaults(socktype, cmd))
-	end
-end
-
--- Esse teste não se aplica à lib do lunatik pela forma como ela funciona
--- isto é, não é necessário receber uma resposta para realizar outra operação
--- (coisa que é necessária no NFLua). Por outro lado, certas operações não podem ser
--- realizadas se um determinado socket estiver fechado, como é o caso das operações
--- que estão baseadas nos estados, pois, para estas existirem, uma determinada sessão
--- precisa existir. (Então para esse caso, rever como fazer o teste)
-
-local function doublesendtest()
-	local function doublesend(socktype, cmd, ...)
-		local s = assert(nflua[socktype]())
-		assert(s[cmd](s, ...) == true)
-		local ok, err = s[cmd](s, ...)
-		assert(ok == nil)
-		assert(err == 'Operation not permitted')
-	end
-
-	local cases = {
-		control = {'create', 'destroy', 'execute', 'list'},
-	}
-
-	for socktype, cmds in pairs(cases) do
-		for _, cmd in ipairs(cmds) do
-			local t = 'doublesend ' .. socktype .. ' ' .. cmd
-			driver.test(t, doublesend, socktype, cmd, defaults(socktype, cmd))
-		end
-	end
-end
-
--- Essa função realiza testes na abertura de sockets de controle
--- os testes específicos que estão aqui não são necessários para
--- a lib do lunatik, que cuida de coisas como portas automatica
--- mente, por outro lado, é necessário realizar testes relacionados
--- a falhas na criação de sockets de controle, tanto de estado quanto
--- de sessão
-
-local function openclosetest_notused()
-	local function openclose(socktype)
-		local s = assert(nflua[socktype]())
-		assert(type(s) == 'userdata')
-		assert(s:close() == true)
-
-		s = assert(nflua[socktype](123))
-		local ok, err = nflua[socktype](123)
-		assert(ok == nil)
-		assert(err == 'Address already in use')
-		s:close()
-
-		local fname = 'nflua.' .. socktype
-		local ok, err = pcall(nflua[socktype], 2 ^ 31)
-		assert(ok == false)
-		assert(err == argerror(1, "must be in range [0, 2^31)", fname))
-
-		local ok, err = pcall(nflua[socktype], 'a')
-		assert(ok == false)
-		assert(err, argerror(1, "must be integer or nil" == fname))
-	end
-
-	for _, socktype in ipairs{'control', 'data'} do
-		driver.test('openclose ' .. socktype, openclose, socktype)
-	end
-end
-
--- Essa função só realiza o teste no file descriptor do socket
--- Seria realmente necessário oferecer isso ao usuário?
-
-local function getfd_notusedyet()
-	local function getfd(socktype)
-		local fd = nil
-		if socktype == 'session' then
-			session = session or assert(lunatik.session())
-		elseif socktype == 'state' then
-			session = session or assert(lunatik.session())
-			state = session:newstate(defaults(socktype))
-			fd = state:getfd()
-		elseif socktype == 'data' then
-			print('Data')
-		end
-	end
-
-	for _, socktype in ipairs{'session', 'state', 'data', ''} do
-		driver.test('getfd ' .. socktype, getfd, socktype)
-	end
-
-end
-
--- A lib do lunatik não oferece suporte ao acesso do pid relacionado
--- à um socket
-local function getpid_notused()
-	local function getpid(socktype)
-		local s = assert(nflua[socktype]())
-		local pid = s:getpid()
-		assert(type(pid) == 'number')
-		assert(pid & (2 ^ 31) == 2 ^ 31)
-		s:close()
-
-		s = assert(nflua[socktype](123))
-		assert(s:getpid() == 123)
-	end
-
-	for _, socktype in ipairs{'control', 'data'} do
-		driver.test('getpid ' .. socktype, getpid, socktype)
 	end
 end
 
@@ -294,16 +185,11 @@ driver.test('session:list', function()
 	assert(#session:list() == 0)
 end)
 
+session:close()
+
 os.exit()
 
-driver.test('control.receive', function()
-	local s = assert(nflua.control())
-
-	local ok, err = s:receive()
-	assert(ok == nil)
-	assert(err == 'Operation not permitted')
-end)
-
+-- TODO due the bug of a send message these tests were not adapted
 driver.test('data.send', function()
 	local c = assert(nflua.control())
 	driver.run(c, 'create', 'st')
@@ -346,4 +232,3 @@ driver.test('data.receive', function()
 	driver.failrun(c, 'could not execute / load data', 'execute', 'st', code)
 end)
 
-session:close()
