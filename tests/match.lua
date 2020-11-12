@@ -50,10 +50,11 @@ driver.test('match state does not exist', function ()
 end)
 
 driver.test('match against undefined function', function ()
-	driver.setup'st'
+	local state = driver.setup'st'
 	util.assertexec(baserule .. '--state st --function f')
 	network.asserttraffic()
 	driver.matchdmesg(4, 'couldn\'t find function: f')
+	assert(state:put())
 end)
 
 driver.test('match against traffic', function ()
@@ -64,14 +65,15 @@ driver.test('match against traffic', function ()
 			return false
 		end
 	]], token)
-	driver.setup('st', code)
+	local state = driver.setup('st', code)
 	util.assertexec(baserule .. '--state st --function f')
 	network.asserttraffic()
 	driver.matchdmesg(2, token)
+	assert(state:put())
 end)
 
 driver.test('match valid return values', function ()
-	local c = driver.setup'st'
+	local state = driver.setup'st'
 	util.assertexec(baserule .. '--state st --function f -j DROP')
 
 	local cases = {
@@ -80,13 +82,14 @@ driver.test('match valid return values', function ()
 		{drop = true,  code = 'function f() return "hotdrop" end'},
 	}
 	for _, case in ipairs(cases) do
-		driver.run(c, 'execute', 'st', case.code)
+		state:dostring(case.code)
 		network.asserttraffic(case.drop and '')
 	end
+	assert(state:put())
 end)
 
 driver.test('match invalid return values', function ()
-	local c = driver.setup'st'
+	local state = driver.setup'st'
 	util.assertexec(baserule .. '--state st --function f -j DROP')
 
 	local cases = {
@@ -95,19 +98,21 @@ driver.test('match invalid return values', function ()
 		'function f() return {} end',
 	}
 	for _, case in ipairs(cases) do
-		driver.run(c, 'execute', 'st', case)
+		state:dostring(case)
 		network.asserttraffic()
 		driver.matchdmesg(1, 'invalid match return')
 	end
+	assert(state:put())
 end)
 
 driver.test('match error', function ()
 	local token = util.gentoken()
 	local code = string.format([[function f() error(%q) end]], token)
-	driver.setup('st', code)
+	local state = driver.setup('st', code)
 	util.assertexec(baserule .. '--state st --function f -j DROP')
 	network.asserttraffic()
 	driver.matchdmesg(3, token)
+	assert(state:put())
 end)
 
 driver.test('match tcp payload', function ()
@@ -119,8 +124,9 @@ driver.test('match tcp payload', function ()
 			return true
 		end
 	]]
-	driver.setup('st', code)
+	local state = driver.setup('st', code)
 	util.assertexec(baserule .. '--state st --tcp-payload --function f')
 	network.asserttraffic()
 	driver.matchdmesg(2, 'number of matches: 1')
+	assert(state:put())
 end)

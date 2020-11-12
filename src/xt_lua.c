@@ -98,9 +98,7 @@ static int nflua_docall(lua_State *L)
 
 	lua_settop(L, 0);
 
-//	luapacket_new(L, skb, hooknum); // Grande candidato para ser o causador do bug, pois, será que essa área de memória é liberada corretamente?
-	
-	lua_pushfstring(L, "Apenas um teste\n");
+	luapacket_new(L, skb, hooknum);
 
 	if (lua_getglobal(L, func) != LUA_TFUNCTION)
 		return luaL_error(L, "couldn't find function: %s\n", func);
@@ -108,13 +106,11 @@ static int nflua_docall(lua_State *L)
 	lua_pushvalue(L, 1);
 	error = lua_pcall(L, 1, 1, 0);
 
-#ifndef UNUSED
 	if (mode == NFLUA_TARGET && lua_isstring(L, -1) &&
 	    strcmp(lua_tostring(L, -1), "stolen") == 0)
 		luapacket_stolen(L, 1);
 	else
 		luapacket_unref(L, 1);
-#endif
 
 	if (error)
 		return lua_error(L);
@@ -209,7 +205,6 @@ unlock:
 
 static bool nflua_match(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	pr_debug("A match have been occoured\n");
 	const struct xt_lua_mtinfo *info = par->matchinfo;
 
 	if ((info->flags & XT_NFLUA_TCP_PAYLOAD) &&

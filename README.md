@@ -84,10 +84,12 @@ sudo rmmod nflua luajson lua-memory luabase64 lunatik
 Running the tests
 -----------------
 
-To run the tests, just run the code below
+To run the tests, you first need to install [luasocket](http://w3.impa.br/~diego/software/luasocket/).
+
+After that, just run the code below:
 
 ```bash
-sudo LD_LIBRARY_PATH=./lib:./deps/lua-memory/src:./deps/lunatik/lib LUA_CPATH='./lua/?.so;./deps/lunatik/lib/?.so;./deps/lua-memory/src/?.so;' \
+sudo LD_LIBRARY_PATH=./lib:./deps/lua-memory/src:./deps/lunatik/lib LUA_CPATH='./lua/?.so;./deps/lunatik/lib/?.so;./deps/lua-memory/src/?.so;/usr/local/lib/lua/5.3/?.so;/usr/lib/x86_64-linux-gnu/lua/5.3/?.so;/usr/lib/lua/5.3/?.so;/usr/local/lib/lua/5.3/loadall.so;;' \
     XTABLES_LIBDIR=./iptables:/usr/lib/x86_64-linux-gnu/xtables \
     lua tests/all.lua
 ```

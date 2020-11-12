@@ -16,6 +16,7 @@
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 --
 
+local lunatik = require'lunatik'
 local memory = require'memory'
 
 local network = require'tests.network'
@@ -84,17 +85,18 @@ function driver.failrun(s, msg, cmd, ...)
 end
 
 function driver.setup(st, code, loadutil)
-	local c = assert(nflua.control())
-	driver.run(c, 'create', st, 1024 ^ 3)
+	local session = assert(lunatik.session())
+	local c = session:newstate(st, 1024 ^ 3)
 	if code then
-		driver.run(c, 'execute', st, code)
+		c:dostring(code)
 	end
 	if loadutil then
 		local path = package.searchpath('tests.nfutil', package.path)
 		local f = io.open(path)
-		driver.run(c, 'execute', st, f:read'a')
+		c:dostring(code)
 		f:close()
 	end
+	session:close()
 	return c
 end
 

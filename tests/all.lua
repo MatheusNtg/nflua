@@ -17,10 +17,9 @@
 --
 
 dofile'tests/lib.lua'
-os.exit()
-
-dofile'tests/timer.lua'
+-- dofile'tests/timer.lua' TODO Discover how this works and adapt it later
 dofile'tests/match.lua'
+os.exit()
 dofile'tests/target.lua'
 dofile'tests/packet.lua'
 dofile'tests/conn.lua'

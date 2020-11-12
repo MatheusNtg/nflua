@@ -187,48 +187,47 @@ end)
 
 session:close()
 
-os.exit()
-
 -- TODO due the bug of a send message these tests were not adapted
-driver.test('data.send', function()
-	local c = assert(nflua.control())
-	driver.run(c, 'create', 'st')
-	driver.run(c, 'execute', 'st', [[
-		function __receive_callback(pid, data)
-			netlink.send(pid, nil, data)
-		end
-	]])
+function notused()
+	driver.test('data.send', function()
+		local c = assert(nflua.control())
+		driver.run(c, 'create', 'st')
+		driver.run(c, 'execute', 'st', [[
+			function __receive_callback(pid, data)
+				netlink.send(pid, nil, data)
+			end
+		]])
 
-	local s = assert(nflua.data())
+		local s = assert(nflua.data())
 
-	local token = util.gentoken()
-	assert(s:send('st', memory.create(token)) == true)
-	local buff, state = driver.datareceive(s)
-	assert(buff == token)
-	assert(state == 'st')
+		local token = util.gentoken()
+		assert(s:send('st', memory.create(token)) == true)
+		local buff, state = driver.datareceive(s)
+		assert(buff == token)
+		assert(state == 'st')
 
-	token = util.gentoken(nflua.datamaxsize + 1)
-	local ok, err = s:send('st', memory.create(token))
-	assert(ok == nil)
-	assert(err == 'Operation not permitted')
+		token = util.gentoken(nflua.datamaxsize + 1)
+		local ok, err = s:send('st', memory.create(token))
+		assert(ok == nil)
+		assert(err == 'Operation not permitted')
 
-	local ok, err = pcall(s.send, s, 'st', 0)
-	assert(ok == false)
-	assert(err == argerror(3, 'memory expected, got number'))
-end)
+		local ok, err = pcall(s.send, s, 'st', 0)
+		assert(ok == false)
+		assert(err == argerror(3, 'memory expected, got number'))
+	end)
 
-driver.test('data.receive', function()
-	local c = assert(nflua.control())
-	local s = assert(nflua.data())
-	driver.run(c, 'create', 'st', 256 * 1024)
+	driver.test('data.receive', function()
+		local c = assert(nflua.control())
+		local s = assert(nflua.data())
+		driver.run(c, 'create', 'st', 256 * 1024)
 
-	local ok, err = pcall(s.receive, s, 0, 0)
-	assert(ok == false)
-	assert(err == argerror(2, 'memory expected, got number'))
+		local ok, err = pcall(s.receive, s, 0, 0)
+		assert(ok == false)
+		assert(err == argerror(2, 'memory expected, got number'))
 
-	local code = string.format([[
-		netlink.send(%d, nil, string.rep('x', 65000))
-	]], s:getpid())
-	driver.failrun(c, 'could not execute / load data', 'execute', 'st', code)
-end)
-
+		local code = string.format([[
+			netlink.send(%d, nil, string.rep('x', 65000))
+		]], s:getpid())
+		driver.failrun(c, 'could not execute / load data', 'execute', 'st', code)
+	end)
+end
