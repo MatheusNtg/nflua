@@ -45,43 +45,49 @@ driver.test('target invalid state', function ()
 end)
 
 driver.test('target function undefined', function ()
-	driver.setup'st'
+	local state = driver.setup'st'
 	util.assertexec(rule)
 	network.asserttraffic()
 	driver.matchdmesg(4, 'couldn\'t find function: f')
+	assert(state:put())
 end)
 
 driver.test('target invalid returns', function()
-	local c = driver.setup('st')
+	local state = driver.setup('st')
 	util.assertexec(rule)
 	for _, case in ipairs{'', '\'continue\'', 'true', 'false', '{}', '1'} do
-		driver.run(c, 'execute', 'st', string.format(
+		state:dostring(string.format(
 		'function f() return %s end', case))
 		network.asserttraffic()
 	end
+	assert(state:put())
 end)
 
 driver.test('target yield error', function()
-	driver.setup('st', 'function f() error\'oops\' end')
+	local state = driver.setup('st', 'function f() error\'oops\' end')
 	util.assertexec(rule)
 	network.asserttraffic()
+	assert(state:put())
 end)
 
 driver.test('target veredict accept', function()
-	driver.setup('st', 'function f() return \'accept\' end')
+	local state = driver.setup('st', 'function f() return \'accept\' end')
 	util.assertexec(rule)
 	util.assertexec(drop)
 	network.asserttraffic()
+	assert(state:put())
 end)
 
 driver.test('target veredict drop', function()
-	driver.setup('st', 'function f() return \'drop\' end')
+	local state = driver.setup('st', 'function f() return \'drop\' end')
 	util.assertexec(rule)
 	network.asserttraffic''
+	assert(state:put())
 end)
 
 driver.test('target veredict stolen', function()
-	driver.setup('st', [[
+	local state = driver.setup('st', [[
+		timer = require'timer'
 		function f(pkt)
 			timer.create(1, function() pkt:send() end)
 			return 'stolen'
@@ -90,11 +96,12 @@ driver.test('target veredict stolen', function()
 	util.assertexec(rule)
 	util.assertexec(drop)
 	network.asserttraffic()
+	assert(state:put())
 end)
 
 driver.test('target veredict repeat-accept', function()
 	local token = util.gentoken()
-	driver.setup('st', string.format([[
+	local state = driver.setup('st', string.format([[
 		cnt = 0
 		function f()
 			cnt = cnt + 1
@@ -106,10 +113,12 @@ driver.test('target veredict repeat-accept', function()
 	util.assertexec(drop)
 	network.asserttraffic()
 	driver.matchdmesg(2, token)
+	assert(state:put())
 end)
 
 driver.test('target veredict repeat-steal', function()
-	driver.setup('st', [[
+	local state = driver.setup('st', [[
+		timer = require'timer'
 		cnt = 0
 		function f(pkt)
 			cnt = cnt + 1
@@ -123,4 +132,5 @@ driver.test('target veredict repeat-steal', function()
 	util.assertexec(rule)
 	util.assertexec(drop)
 	network.asserttraffic()
+	assert(state:put())
 end)
