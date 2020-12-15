@@ -86,7 +86,7 @@ driver.test('session:create', function()
 	assert(ok == false)
 	assert(err == argerror(2, 'name too long'))
 
-	s:close()
+	assert(s:close())
 end)
 
 driver.test('session:getstate', function()

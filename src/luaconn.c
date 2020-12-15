@@ -81,7 +81,7 @@ struct nf_conn *nflua_findconnid(lua_State *L)
 	tuple.src.u.all = htons(sport);
 	tuple.dst.u.all = htons(dport);
 
-	hash = nf_conntrack_find_get(&(s->instance.namespace), KPI_CT_DEFAULT_ZONE, &tuple);
+	hash = nf_conntrack_find_get(lunatik_get_namespace(s), KPI_CT_DEFAULT_ZONE, &tuple);
 
 	if (hash == NULL)
 		return NULL;
